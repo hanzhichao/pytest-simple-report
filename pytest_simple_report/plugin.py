@@ -14,6 +14,8 @@ DEFAULT_REPORT_TPL = '''<!DOCTYPE html>
 </head>
 <body>
     <h2>{{title}}</h2>
+    <p>Start Time: {{start_time}} EndTime: {{end_time}} </p>
+    <p>Total: {{total}} Passed: {{passed}} Failed: {{failed}} Skipped: {{skipped}} Xfailed: {{xfailed}} Xpassed: {{xpassed}}</p>
     <table>
         <tr> <th>Test</th> <th>NodeId</th> <th>Status</th><th>Output</th> <th>Duration</th> </tr>
         {% for test in results %}
@@ -22,7 +24,7 @@ DEFAULT_REPORT_TPL = '''<!DOCTYPE html>
             <td>{{test.id}}</td>
             <td>{{test.status}}</td>
             <td>{{test.output}}</td>
-            <td>{{ test.duration }}s</td>
+            <td>{{test.duration}}s</td>
         </tr>
         {% endfor %}
     </table>
@@ -40,6 +42,17 @@ def pytest_addoption(parser):
 
 
 def pytest_terminal_summary(terminalreporter, exitstatus, config):
+    pprint(terminalreporter.__dict__)
+    total = terminalreporter._numcollected
+    end_time = terminalreporter._collect_report_last_write
+    start_time = terminalreporter._sessionstarttime
+    passed = len(terminalreporter.stats.get('passed', []))
+    failed = len(terminalreporter.stats.get('failed', []))
+    skipped = len(terminalreporter.stats.get('skipped', []))
+    xfailed = len(terminalreporter.stats.get('xfailed', []))
+    xpassed = len(terminalreporter.stats.get('xpassed', []))
+
+    # pprint(terminalreporter.stats['passed'][0].__dict__)
     report_file = config.getoption('--report') or config.getini('report')
     if report_file:
         title = config.getoption('--report-title') or config.getini('report_title') or DEFAULT_REPORT_TITLE
@@ -48,7 +61,7 @@ def pytest_terminal_summary(terminalreporter, exitstatus, config):
         items = []
         for status in ['passed', 'failed', 'skipped', 'xfailed', 'xpassed']:
             if status in terminalreporter.stats:
-                items.extend(terminalreporter.stats[status])
+                items.extend(terminalreporter.stats.get(status, []))
 
         # format
         results = []
@@ -59,6 +72,8 @@ def pytest_terminal_summary(terminalreporter, exitstatus, config):
                     'duration': round(item.duration, 2)}
             results.append(test)
 
-        html = Template(template).render(title=title, results=results)
+        html = Template(template).render(title=title, results=results, total=total, start_time=start_time,
+                                         end_time=end_time, passed=passed, failed=failed, skipped=skipped,
+                                         xfailed=xfailed, xpassed=xpassed)
         with open(report_file, 'w', encoding='utf-8') as f:
             f.write(html)
