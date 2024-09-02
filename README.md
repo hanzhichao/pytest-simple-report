@@ -24,3 +24,7 @@ def test_b():
 pytest test_pytest_simple_report.py --report=report.html
 ```
 另外，该插件提供了额外的名为owner的Fixture函数，以共获取当前指定的owner列表。
+
+示例报告如下:
+
+![demo-report](./demo-report.png)
