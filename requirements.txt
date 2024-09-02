@@ -1,0 +1,4 @@
+pytest~=8.3.2
+
+setuptools~=72.1.0
+jinja2~=3.1.4
